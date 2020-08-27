@@ -1,12 +1,14 @@
 # artemis
 
-Visual Studio Code development environment for [SparkFun Artemis](https://www.sparkfun.com/artemis) based boards.
+A Visual Studio Code development environment for [SparkFun Artemis](https://www.sparkfun.com/artemis) based boards.
 
-This project provides a starting template to develop, build, load, and debug SparkFun Artemis based boards using Visual Studio Code in conjunction with a Segger J-Link device. This project natively supports the Windows 10 platform and does ***not*** rely on Windows Subsystem for Linux (WSL), MinGW, etc.
+This project provides a starting template to develop, build, load, and debug SparkFun Artemis based boards using Visual Studio Code in conjunction with Segger J-Link. This project natively supports the Windows 10 platform and does ***not*** rely on Windows Subsystem for Linux (WSL), MinGW, etc. The batch file, build.bat, which supports building and loading from Windows is modeled after the Makefile template provided in the [SparkFun Board Support Package](https://github.com/sparkfun/SparkFun_Apollo3_AmbiqSuite_BSPs) repository.
+
+While the current configuration supports Segger J-Link, it can be configured to support OpenOCD, etc.
 
 ## Dependencies
 
-The latest version of each tool/extension should be used unless otherwise noted. During installation, if the option is available to add a given tool to the PATH environment variable, please do so. This is very important for the GNU Arm Embedded Toolchain.
+The latest version of each tool/extension should be used unless otherwise noted. During installation, if the option is available to add a given tool to the system PATH environment variable, please do so. This is very important for the GNU Arm Embedded Toolchain.
 
 The following tools are required to make use of this repository:
 
@@ -35,7 +37,7 @@ cd artemis
 git submodule update --init --recursive
 ```
 
-This repository includes the SparkFun copy of the [AmbiqSuite SDK](https://github.com/sparkfun/AmbiqSuiteSDK) as a git submodule. In turn, this copy of the SDK includes the SparkFun [Board Support Package](https://github.com/sparkfun/SparkFun_Apollo3_AmbiqSuite_BSPs) repository as a git submodule. By using the --init --recursive flags both submodules will be initialized and updated correctly.
+This repository includes the SparkFun copy of the [AmbiqSuite SDK](https://github.com/sparkfun/AmbiqSuiteSDK) as a git submodule. In turn, this copy of the SDK includes the [SparkFun Board Support Package](https://github.com/sparkfun/SparkFun_Apollo3_AmbiqSuite_BSPs) repository as a git submodule. By using the `--init` and `--recursive` flags both submodules will be initialized and updated correctly.
 
 ### Open the project
 
@@ -61,19 +63,77 @@ Click on `Edit in settings.json` which will open the `settings.json` document. U
 }
 ```
 
-### Update c_cpp_properties.json settings in the .vscode folder
+### Update the c_cpp_properties.json settings in the .vscode folder
 
 Update the `compilerPath` value to match your system configuration.
 
-### Update launch.json settings in the .vscode folder
+```json
+{
+  "version": 4,
+  "configurations": [
+    {
+      "name": "gcc-arm",
+      "includePath": [
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/AmbiqSuiteSDK/boards_sfe/artemis_thing_plus/bsp",
+        "${workspaceFolder}/AmbiqSuiteSDK/utils",
+        "${workspaceFolder}/AmbiqSuiteSDK/devices",
+        "${workspaceFolder}/AmbiqSuiteSDK/mcu/apollo3",
+        "${workspaceFolder}/AmbiqSuiteSDK/CMSIS/AmbiqMicro/Include",
+        "${workspaceFolder}/AmbiqSuiteSDK/CMSIS/ARM/Include"
+      ],
+      "defines": [],
+      "compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/9 2020-q2-update/bin/arm-none-eabi-gcc.exe",
+      "intelliSenseMode": "gcc-arm"
+    }
+  ]
+}
+```
 
-Update the `serverpath` value to match your system configuration. Also update the `cpuFrequency`, `swoFrequency`, and `device` values to match your Artemis board.
+### Update the launch.json settings in the .vscode folder
+
+Update the `serverpath` value to match your system configuration. Also update the `cpuFrequency`, `swoFrequency`, and `device` values to match your Artemis board. For most SparkFun Artemis boards the default values should be correct.
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Cortex Debug",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceRoot}",
+      "servertype": "jlink",
+      "serverpath": "C:/Program Files (x86)/SEGGER/JLink/JLinkGDBServerCL.exe",
+      "interface": "swd",
+      "swoConfig": {
+        "enabled": true,
+        "cpuFrequency": 48000000,
+        "swoFrequency": 2000000,
+        "source": "probe",
+        "decoders": [
+          {
+            "type": "console",
+            "label": "ITM",
+            "port": 0,
+            "encoding": "ascii"
+          }
+        ]
+      },
+      "device": "AMA3B1KK-KBR",
+      "svdFile": "${workspaceRoot}/AmbiqSuiteSDK/pack/SVD/apollo3.svd",
+      "executable": "${workspaceRoot}/bin/output_svl.axf",
+      "runToMain": true,
+    }
+  ]
+}
+```
 
 ### Update build.bat
 
 Several parameters in build.bat must be verified and/or updated.
 
-The first set of parameters are associated with your Artemis board. Please update these parameters to match your boards attributes. The default parameters found in build.bat are for the Artemis Thing Plus. If you're using this board then no modification should be necessary.
+The first set of parameters are associated with your Artemis board. Please update these parameters to match your boards attributes. The default parameters found in build.bat are for the Artemis Thing Plus. If you're using this board then no modifications should be necessary.
 
 * BLD_BOARD=artemis_thing_plus
 * BLD_PART=APOLLO3
@@ -93,7 +153,9 @@ In the future, when you're ready to add additional source files, libraries, etc.
 * BLD_SOURCE=src/mysrc.c
 * BLD_LIBRARY=mylib.a
 
-## Build, Load, and Debug
+## Build, Load, Debug, and Clean
+
+### Build
 
 Press `F1`. This will display a popup menu listing all commands. Select `Tasks: Run Build Task` from the list of tasks. Alternatively you can press `Ctrl + Shift + B` to reach the same set of build tasks.
 
@@ -127,6 +189,8 @@ A `bin` directory is created containing the following list of output files:
 * output_svl.map
 * startup_gcc.o
 
+### Load
+
 To load `output_svl.bin` onto your Artemis board press `Ctrl + Shift + B` and select `bootload`. This executes the `artemis_svl.exe` process provided by SparkFun and loads the binary via the SparkFun Variable Loader (SVL). You should see the following (or similar) printed to the console:
 
 ```shell
@@ -148,9 +212,69 @@ phase:  bootload
         Nominal bootload bps: 36222.77
 ```
 
-Press `F5`. This will launch the Segger J-Link GDB server.
+### Debug
 
-TODO
+To begin debugging press `F5`. This will launch the Segger J-Link GDB server. Your application will stop at a breakpoint in `main()`:
+
+![main()](doc/image/main.jpg)
+
+You should see the following printed to the `DEBUG CONSOLE` tab at the bottom of Visual Studio Code:
+
+```shell
+Please check OUTPUT tab (Adapter Output) for output from C:/Program Files (x86)/SEGGER/JLink/JLinkGDBServerCL.exe
+Launching server: "C:/Program Files (x86)/SEGGER/JLink/JLinkGDBServerCL.exe" "-if" "swd" "-port" "50000" "-swoport" "50001" "-telnetport" "50002" "-device" "AMA3B1KK-KBR"
+Launching GDB: "C:\Program Files (x86)\GNU Arm Embedded Toolchain\9 2020-q2-update\bin\arm-none-eabi-gdb.exe" "-q" "--interpreter=mi2"
+undefinedC:\Program Files (x86)\GNU Arm Embedded Toolchain\9 2020-q2-update\bin\arm-none-eabi-gdb.exe: warning: Couldn't determine a path for the index cache directory.
+Reading symbols from C:\Solutions\artemis/bin/output_svl.axf...
+main () at src/main.c:47
+47      am_hal_clkgen_control(AM_HAL_CLKGEN_CONTROL_SYSCLK_MAX, 0);
+Not implemented stop reason (assuming exception): undefined
+Resetting target
+Resetting target
+SWO enabled successfully.
+
+Temporary breakpoint 1, main () at src/main.c:47
+47      am_hal_clkgen_control(AM_HAL_CLKGEN_CONTROL_SYSCLK_MAX, 0);
+```
+
+At the top of Visual Studio Code you'll find a popup dialog with Debug buttons that include `Continue`, `Step Over`, `Step Into`, `Step Out`, etc.:
+
+![Debug](doc/image/debug.jpg)
+
+Click the `Continue` button.
+
+At the bottom of Visual Studio Code you'll find several output consoles:
+
+![Output](doc/image/output.jpg)
+
+Click on the `OUTPUT` tab. By default, `Adapter Output` is selected in the drop-down menu on the right:
+
+![Adapter](doc/image/adapter.jpg)
+
+You should see the following (or similar) printed to the `OUTPUT` tab:
+
+```shell
+...
+Reading register (d11 = 0x       0)
+Reading register (d12 = 0x       0)
+Reading register (d13 = 0x       0)
+Reading register (d14 = 0x       0)
+Reading register (d15 = 0x       0)
+```
+
+In the drop down menu on the right (the selection is currently `Adapter Output`) select `SWO: ITM [port: 0, type: console]`:
+
+![SWO](doc/image/swo.jpg)
+
+You should see the following (or similar) printed to the `OUTPUT` tab:
+
+```shell
+[2020-08-27T19:45:44.753Z]   Test SWO output
+```
+
+This verifies functions like `am_util_stdio_printf()` are working properly (see src/main.c:57).
+
+### Clean
 
 To clean the project, again bring up the build task by pressing `Ctrl + Shift + B` and select `clean`. You should see the following printed to the console:
 
