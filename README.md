@@ -8,7 +8,7 @@ While the current configuration supports Segger J-Link, it can be configured to 
 
 The SparkFun Artemis [forum](https://forum.sparkfun.com/viewforum.php?f=167) is highly recommended for information and support.
 
-In addition to providing a starting template to develop, build, load, and debug with Visual Studio Code, this project also serves as a foundation for a quadruped robot inspired by the work of [Martin Triendl](https://www.youtube.com/watch?v=QWxBLGjrkEU). While the full implementation is maintained in a seperate repository, core components are updated in this repository to provide others a starting point (or at minimum, example code). For instance, the code demonstrates how to control servos using the [PCA9685 Servo Driver](doc/hardware/pca9685/adafruit-16-channel-pwm-servo-driver.pdf) over I2C via the AmbiqSuiteSDK HAL `transfer` functions.
+In addition to providing a starting template to develop, build, load, and debug with Visual Studio Code, this project also serves as a foundation for a quadruped robot inspired by the work of [Martin Triendl](https://www.youtube.com/watch?v=QWxBLGjrkEU). While the full implementation is maintained in a seperate repository, core components are updated in this repository to provide others a starting point (or at minimum, example code). For instance, the code demonstrates how to control servos using the [PCA9685 Servo Driver](doc/hardware/pca9685/adafruit-16-channel-pwm-servo-driver.pdf) over I2C via the AmbiqSuiteSDK HAL `transfer` functions. It also demonstrates how to read data from a [InvenSense ICM-20649](doc/hardware/icm20649/adafruit-icm20649-wide-range-6-dof-imu.pdf) IMU (accel/gyro) over SPI via the same AmbiqSuiteSDK HAL `transfer` functions.
 
 ## Dependencies
 
@@ -184,6 +184,8 @@ Compiling 'src/artemis_spi.c'
 Compiling 'src/artemis_stream.c'
 Compiling 'src/artemis_pca9685.c'
 Compiling 'src/artemis_servo.c'
+Compiling 'src/artemis_icm20649.c'
+Compiling 'src/artemis_imu.c'
 Compiling 'AmbiqSuiteSDK/devices/am_devices_led.c'
 Compiling 'AmbiqSuiteSDK/utils/am_util_delay.c'
 Compiling 'AmbiqSuiteSDK/utils/am_util_stdio.c'
@@ -202,6 +204,8 @@ A `bin` directory is created containing the following list of output files:
 * artemis_core.o
 * artemis_debug.o
 * artemis_i2c.o
+* artemis_icm20649.o
+* artemis_imu.o
 * artemis_iom.o
 * artemis_led.o
 * artemis_main.o
@@ -233,18 +237,19 @@ phase:  setup
         Sending 'enter bootloader' command
 
 phase:  bootload
-        have 14056 bytes to send in 7 frames
+        have 14376 bytes to send in 8 frames
         sending frame #1, length: 2048
         sending frame #2, length: 2048
         sending frame #3, length: 2048
         sending frame #4, length: 2048
         sending frame #5, length: 2048
         sending frame #6, length: 2048
-        sending frame #7, length: 1768
+        sending frame #7, length: 2048
+        sending frame #8, length: 40
 
         Upload complete
 
-        Nominal bootload bps: 39294.83
+        Nominal bootload bps: 37136.71
 ```
 
 ### Debug

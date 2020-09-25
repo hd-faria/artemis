@@ -14,21 +14,18 @@
 extern "C" {
 #endif
 
-typedef enum s_artemis_spi_bitorder_t
-{
-    ARTEMIS_SPI_BITORDER_MSB,
-    ARTEMIS_SPI_BITORDER_LSB
-} artemis_spi_bitorder_t;
+#define ARTEMIS_SPI_READBIT_MSB (0x80)
+#define ARTEMIS_SPI_READBIT_LSB (0x01)
 
 typedef struct s_artemis_spi_t
 {
-    artemis_spi_bitorder_t bitorder;
+    uint8_t chipselect;
     artemis_iom_t iom;
 } artemis_spi_t;
 
-bool artemis_spi_send(artemis_spi_t *spi, artemis_stream_t *txstream);
-bool artemis_spi_receive(artemis_spi_t *spi, artemis_stream_t *rxstream, uint32_t rxnumber);
-bool artemis_spi_transfer(artemis_spi_t *spi, artemis_stream_t *txstream, artemis_stream_t *rxstream);
+bool artemis_spi_send(artemis_spi_t *spi, bool stop, artemis_stream_t *txstream);
+bool artemis_spi_receive(artemis_spi_t *spi, bool stop, artemis_stream_t *rxstream, uint32_t rxnumber);
+bool artemis_spi_transfer(artemis_spi_t *spi, bool stop, artemis_stream_t *txstream, artemis_stream_t *rxstream);
 
 #ifdef __cplusplus
 }

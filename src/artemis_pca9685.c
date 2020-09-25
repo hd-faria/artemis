@@ -28,7 +28,7 @@
 #define ARTEMIS_PCA9685_REG_PRESCALE     (0xFE) // prescaler for PWM output frequency
 #define ARTEMIS_PCA9685_REG_TESTMODE     (0xFF) // defines the test mode to be entered
 
-// PCA9685 mode 1
+// PCA9685 mode 1 bit masks
 #define ARTEMIS_PCA9685_MODE1_RESTART    (0x80) // restart enabled
 #define ARTEMIS_PCA9685_MODE1_EXTCLK     (0x40) // use EXTCLK pin clock
 #define ARTEMIS_PCA9685_MODE1_AI         (0x20) // register Auto-Increment enabled
@@ -38,7 +38,7 @@
 #define ARTEMIS_PCA9685_MODE1_SUB3       (0x02) // PCA9685 responds to I2C-bus subaddress 3
 #define ARTEMIS_PCA9685_MODE1_ALLCALL    (0x01) // PCA9685 responds to LED All Call I2C-bus address
 
-// PCA9685 mode 2
+// PCA9685 mode 2 bit masks
 #define ARTEMIS_PCA9685_MODE2_INVRT      (0x10) // output logic state inverted
 #define ARTEMIS_PCA9685_MODE2_OCH        (0x08) // outputs change on ACK instead of STOP
 #define ARTEMIS_PCA9685_MODE2_OUTDRV     (0x04) // the 16 LEDn outputs are configured with a totem pole structure
@@ -77,12 +77,12 @@ void artemis_pca9685_initialize(uint16_t frequency)
     artemis_i2c_t *i2c = &module.i2c;
 
     i2c->address = ARTEMIS_PCA9685_I2C_ADDRESS;
-    i2c->stop = true;
 
-    i2c->iom.module = ARTEMIS_IOM_MODULE_I2C0; // QWIIC
+    i2c->iom.module = ARTEMIS_IOM_MODULE_I2C0;
     i2c->iom.config.eInterfaceMode = AM_HAL_IOM_I2C_MODE;
     i2c->iom.config.ui32ClockFreq = AM_HAL_IOM_400KHZ;
     artemis_iom_initialize(&i2c->iom);
+
     am_hal_gpio_pinconfig(AM_BSP_GPIO_IOM4_SCL, g_AM_BSP_GPIO_IOM4_SCL);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_IOM4_SDA, g_AM_BSP_GPIO_IOM4_SDA);
 
@@ -136,7 +136,7 @@ void artemis_pca9685_setpwm(uint8_t pin, uint16_t value, bool invert)
     artemis_stream_put(&txstream, on >> 8);
     artemis_stream_put(&txstream, off);
     artemis_stream_put(&txstream, off >> 8);
-    artemis_i2c_send(&module.i2c, &txstream);
+    artemis_i2c_send(&module.i2c, true, &txstream);
 }
 
 ///
@@ -149,7 +149,7 @@ static void module_pca9685_reset(void)
     artemis_stream_setbuffer(&txstream, module.txbuffer, ARTEMIS_PCA9685_I2CBUFFER_LENGTH);
     artemis_stream_put(&txstream, ARTEMIS_PCA9685_REG_MODE1);
     artemis_stream_put(&txstream, ARTEMIS_PCA9685_MODE1_RESTART);
-    artemis_i2c_send(&module.i2c, &txstream);
+    artemis_i2c_send(&module.i2c, true, &txstream);
 
     artemis_time_delayus(500);
 }
@@ -169,10 +169,10 @@ static void module_pca9685_setfrequency(uint16_t frequency)
 
     artemis_stream_setbuffer(&txstream, module.txbuffer, ARTEMIS_PCA9685_I2CBUFFER_LENGTH);
     artemis_stream_put(&txstream, ARTEMIS_PCA9685_REG_MODE1);
-    artemis_i2c_send(&module.i2c, &txstream);
+    artemis_i2c_send(&module.i2c, true, &txstream);
 
     artemis_stream_setbuffer(&rxstream, module.rxbuffer, ARTEMIS_PCA9685_I2CBUFFER_LENGTH);
-    artemis_i2c_receive(&module.i2c, &rxstream, 1);
+    artemis_i2c_receive(&module.i2c, true, &rxstream, 1);
     artemis_stream_get(&rxstream, &oldmode);
 
     // prescale can only be set when in sleep mode
@@ -181,17 +181,17 @@ static void module_pca9685_setfrequency(uint16_t frequency)
     artemis_stream_reset(&txstream);
     artemis_stream_put(&txstream, ARTEMIS_PCA9685_REG_MODE1);
     artemis_stream_put(&txstream, newmode);
-    artemis_i2c_send(&module.i2c, &txstream);
+    artemis_i2c_send(&module.i2c, true, &txstream);
 
     artemis_stream_reset(&txstream);
     artemis_stream_put(&txstream, ARTEMIS_PCA9685_REG_PRESCALE);
     artemis_stream_put(&txstream, prescale);
-    artemis_i2c_send(&module.i2c, &txstream);
+    artemis_i2c_send(&module.i2c, true, &txstream);
 
     artemis_stream_reset(&txstream);
     artemis_stream_put(&txstream, ARTEMIS_PCA9685_REG_MODE1);
     artemis_stream_put(&txstream, oldmode | ARTEMIS_PCA9685_MODE1_RESTART | ARTEMIS_PCA9685_MODE1_AI);
-    artemis_i2c_send(&module.i2c, &txstream);
+    artemis_i2c_send(&module.i2c, true, &txstream);
 
     artemis_time_delayus(500);
 }
